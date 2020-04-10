@@ -21,6 +21,7 @@ import android.content.Intent;
 import android.view.KeyEvent;
 import android.view.View;
 
+import com.xuexiang.xaop.annotation.MemoryCache;
 import com.xuexiang.xaop.annotation.Permission;
 import com.xuexiang.xaop.consts.PermissionConsts;
 import com.xuexiang.xpage.annotation.Page;
@@ -28,7 +29,9 @@ import com.xuexiang.xpage.base.XPageSimpleListFragment;
 import com.xuexiang.xpage.utils.TitleBar;
 import com.xuexiang.xupdate.XUpdate;
 import com.xuexiang.xupdate._XUpdate;
+import com.xuexiang.xupdate.entity.UpdateEntity;
 import com.xuexiang.xupdate.proxy.impl.DefaultUpdateChecker;
+import com.xuexiang.xupdate.proxy.impl.DefaultUpdateParser;
 import com.xuexiang.xupdate.service.OnFileDownloadListener;
 import com.xuexiang.xupdatedemo.R;
 import com.xuexiang.xupdatedemo.activity.UpdateActivity;
@@ -42,6 +45,7 @@ import com.xuexiang.xutil.app.PathUtils;
 import com.xuexiang.xutil.common.ClickUtils;
 import com.xuexiang.xutil.file.FileUtils;
 import com.xuexiang.xutil.resource.ResUtils;
+import com.xuexiang.xutil.resource.ResourceUtils;
 import com.xuexiang.xutil.tip.ToastUtils;
 
 import java.io.File;
@@ -56,13 +60,13 @@ import static android.app.Activity.RESULT_OK;
 @Page(name = "XUpdate 版本更新")
 public class MainFragment extends XPageSimpleListFragment {
 
-    private String mUpdateUrl = "https://raw.githubusercontent.com/xuexiangjys/XUpdate/master/jsonapi/update_test.json";
+    private String mUpdateUrl = "https://gitee.com/xuexiangjys/XUpdate/raw/master/jsonapi/update_test.json";
 
-    private String mUpdateUrl2 = "https://raw.githubusercontent.com/xuexiangjys/XUpdate/master/jsonapi/update_forced.json";
+    private String mUpdateUrl2 = "https://gitee.com/xuexiangjys/XUpdate/raw/master/jsonapi/update_forced.json";
 
-    private String mUpdateUrl3 = "https://raw.githubusercontent.com/xuexiangjys/XUpdate/master/jsonapi/update_custom.json";
+    private String mUpdateUrl3 = "https://gitee.com/xuexiangjys/XUpdate/raw/master/jsonapi/update_custom.json";
 
-    private String mDownloadUrl = "https://raw.githubusercontent.com/xuexiangjys/XUpdate/master/apk/xupdate_demo_1.0.2.apk";
+    private String mDownloadUrl = "https://xuexiangjys.oss-cn-shanghai.aliyuncs.com/apk/xupdate_demo_1.0.2.apk";
 
     private final static int REQUEST_CODE_SELECT_APK_FILE = 1000;
     @Override
@@ -75,6 +79,7 @@ public class MainFragment extends XPageSimpleListFragment {
         lists.add("默认App更新 + 自定义提示弹窗主题");
         lists.add("默认App更新 + 自定义Api");
         lists.add("默认App更新 + 自定义Api + 自定义提示弹窗(系统）");
+        lists.add("直接传入UpdateEntity进行更新");
         lists.add("使用apk下载功能");
         lists.add("使用apk安装功能");
         lists.add("版本更新提示框在FragmentActivity中使用UpdateDialogFragment, 在普通Activity中使用UpdateDialog");
@@ -112,10 +117,11 @@ public class MainFragment extends XPageSimpleListFragment {
                 break;
             case 5:
                 XUpdate.newBuild(getActivity())
-                        .updateHttpService(new XHttpUpdateHttpService("https://raw.githubusercontent.com"))
-                        .updateUrl("/xuexiangjys/XUpdate/master/jsonapi/update_test.json")
-                        .themeColor(ResUtils.getColor(R.color.update_theme_color))
-                        .topResId(R.mipmap.bg_update_top)
+                        .updateHttpService(new XHttpUpdateHttpService("https://gitee.com"))
+                        .updateUrl("/xuexiangjys/XUpdate/raw/master/jsonapi/update_test.json")
+                        .promptThemeColor(ResUtils.getColor(R.color.update_theme_color))
+                        .promptTopResId(R.mipmap.bg_update_top)
+                        .promptWidthRatio(0.7F)
                         .update();
                 break;
             case 6:
@@ -144,15 +150,20 @@ public class MainFragment extends XPageSimpleListFragment {
                         .update();
                 break;
             case 8:
-                useApkDownLoadFunction();
+                XUpdate.newBuild(getActivity())
+                        .build()
+                        .update(getUpdateEntityFromAssets());
                 break;
             case 9:
-                selectAPKFile();
+                useApkDownLoadFunction();
                 break;
             case 10:
-                startActivity(new Intent(getContext(), UpdateActivity.class));
+                selectAPKFile();
                 break;
             case 11:
+                startActivity(new Intent(getContext(), UpdateActivity.class));
+                break;
+            case 12:
                 openPage(XUpdateServiceFragment.class);
                 break;
             default:
@@ -160,6 +171,10 @@ public class MainFragment extends XPageSimpleListFragment {
         }
     }
 
+    @MemoryCache
+    private UpdateEntity getUpdateEntityFromAssets() {
+        return new DefaultUpdateParser().parseJson(ResourceUtils.readStringFromAssert("update_test.json"));
+    }
 
     @Permission(PermissionConsts.STORAGE)
     private void useApkDownLoadFunction() {

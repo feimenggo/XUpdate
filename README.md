@@ -45,7 +45,11 @@
 
 * 兼容Android6.0、7.0、8.0和9.0。
 
-* 支持中文和英文两种语言显示（国际化）
+* 支持中文和英文两种语言显示（国际化）。
+
+* 支持Flutter插件使用：[flutter_xupdate](https://github.com/xuexiangjys/flutter_xupdate)。
+
+* 支持React-Native插件使用：[react-native-xupdate](https://github.com/xuexiangjys/react-native-xupdate)。
 
 ## 组成结构
 
@@ -115,7 +119,17 @@ IUpdateProxy/XUpdate --- (update) ---> IUpdateChecker --->（请求服务器，�
 
 ### Demo下载
 
-[![downloads](https://img.shields.io/badge/downloads-1.6M-blue.svg)](https://github.com/xuexiangjys/XUpdate/blob/master/apk/xupdate_demo_1.0.apk?raw=true)
+#### 蒲公英下载
+
+> 蒲公英下载的密码: xuexiangjys
+
+[![downloads](https://img.shields.io/badge/downloads-2.1M-blue.svg)](https://www.pgyer.com/xupdate)
+
+![](./img/download_pugongying.png)
+
+#### Github下载
+
+[![downloads](https://img.shields.io/badge/downloads-2.1M-blue.svg)](https://github.com/xuexiangjys/XUpdate/blob/master/apk/xupdate_demo_1.0.apk?raw=true)
 
 ![](./img/download.png)
 
@@ -142,7 +156,7 @@ allprojects {
 ```
 dependencies {
   ...
-  implementation 'com.github.xuexiangjys:XUpdate:1.1.1'
+  implementation 'com.github.xuexiangjys:XUpdate:1.1.4'
 }
 ```
 
@@ -298,14 +312,17 @@ XUpdate.newBuild(getActivity())
 
 可设置弹窗的标题背景和按钮颜色。
 
-* themeColor: 设置主题颜色（升级/安装按钮的背景色）
-* topResId: 弹窗的标题背景的资源图片
+* promptThemeColor: 设置主题颜色（升级/安装按钮的背景色）
+* promptTopResId: 弹窗的标题背景的资源图片
+* promptWidthRatio: 弹窗宽度占屏幕宽度的比例，默认是-1，不做约束
+* promptHeightRatio: 弹窗高度占屏幕高度的比例，默认是-1，不做约束
 
 ```
 XUpdate.newBuild(getActivity())
         .updateUrl(mUpdateUrl)
         .themeColor(ResUtils.getColor(R.color.update_theme_color))
         .topResId(R.mipmap.bg_update_top)
+        .promptWidthRatio(0.7F)
         .update();
 ```
 
@@ -470,8 +487,22 @@ _XUpdate.startInstallApk(getContext(), FileUtils.getFileByPath(PathUtils.getFile
 
 ```
 -keep class com.xuexiang.xupdate.entity.** { *; }
+
+//注意，如果你使用的是自定义Api解析器解析，还需要给你自定义Api实体配上混淆，如下是本demo中配置的自定义Api实体混淆规则：
+-keep class com.xuexiang.xupdatedemo.entity.** { *; }
+
 ```
+
+## 相关链接
+
+* [XUpdate 文档](https://github.com/xuexiangjys/XUpdate/wiki)
+* [XUpdate 管理服务](https://github.com/xuexiangjys/XUpdateService)
+* [XUpdate 后台管理系统](https://github.com/xuexiangjys/xupdate-management)
+* [XUpdate Flutter插件](https://github.com/xuexiangjys/flutter_xupdate)
+* [XUpdate React-Native插件](https://github.com/xuexiangjys/react-native-xupdate)
+
 ---
+
 
 ## 特别感谢
 
@@ -482,6 +513,12 @@ https://github.com/WVector/AppUpdate
 > 你的打赏是我维护的动力，我将会列出所有打赏人员的清单在下方作为凭证，打赏前请留下打赏项目的备注！
 
 ![](https://github.com/xuexiangjys/Resource/blob/master/img/pay/alipay.jpeg) &emsp; ![](https://github.com/xuexiangjys/Resource/blob/master/img/pay/weixinpay.jpeg)
+
+感谢下面小伙伴的打赏：
+
+姓名 | 金额 | 方式
+:-|:-|:-
+*天 | 100￥ | 微信
 
 
 ## 联系方式

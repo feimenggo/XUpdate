@@ -20,6 +20,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.ColorInt;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
@@ -27,6 +28,7 @@ import android.text.TextUtils;
 
 import com.xuexiang.xupdate.entity.PromptEntity;
 import com.xuexiang.xupdate.entity.UpdateEntity;
+import com.xuexiang.xupdate.listener.IUpdateParseCallback;
 import com.xuexiang.xupdate.logs.UpdateLog;
 import com.xuexiang.xupdate.proxy.IUpdateChecker;
 import com.xuexiang.xupdate.proxy.IUpdateDownloader;
@@ -244,6 +246,15 @@ public class UpdateManager implements IUpdateProxy {
         }
     }
 
+    @Override
+    public boolean isAsyncParser() {
+        if (mIUpdateProxy != null) {
+            return mIUpdateProxy.isAsyncParser();
+        } else {
+            return mIUpdateParser.isAsyncParser();
+        }
+    }
+
     /**
      * 将请求的json结果解析为版本更新信息实体
      *
@@ -260,6 +271,28 @@ public class UpdateManager implements IUpdateProxy {
         }
         mUpdateEntity = refreshParams(mUpdateEntity);
         return mUpdateEntity;
+    }
+
+    @Override
+    public void parseJson(@NonNull String json, final IUpdateParseCallback callback) throws Exception {
+        UpdateLog.i("服务端返回的最新版本信息:" + json);
+        if (mIUpdateProxy != null) {
+            mIUpdateProxy.parseJson(json, new IUpdateParseCallback() {
+                @Override
+                public void onParseResult(UpdateEntity updateEntity) {
+                    mUpdateEntity = refreshParams(updateEntity);
+                    callback.onParseResult(updateEntity);
+                }
+            });
+        } else {
+            mIUpdateParser.parseJson(json, new IUpdateParseCallback() {
+                @Override
+                public void onParseResult(UpdateEntity updateEntity) {
+                    mUpdateEntity = refreshParams(updateEntity);
+                    callback.onParseResult(updateEntity);
+                }
+            });
+        }
     }
 
     /**
@@ -350,6 +383,18 @@ public class UpdateManager implements IUpdateProxy {
         }
     }
 
+    @Override
+    public void cancelDownload() {
+        UpdateLog.d("正在取消更新文件的下载...");
+        if (mIUpdateProxy != null) {
+            mIUpdateProxy.cancelDownload();
+        } else {
+            mIUpdateDownloader.cancelDownload();
+        }
+    }
+
+    //============================对外提供的自定义使用api===============================//
+
     /**
      * 为外部提供简单的下载功能
      *
@@ -360,15 +405,20 @@ public class UpdateManager implements IUpdateProxy {
         startDownload(refreshParams(new UpdateEntity().setDownloadUrl(downloadUrl)), downloadListener);
     }
 
-    @Override
-    public void cancelDownload() {
-        UpdateLog.d("正在取消更新文件的下载...");
-        if (mIUpdateProxy != null) {
-            mIUpdateProxy.cancelDownload();
-        } else {
-            mIUpdateDownloader.cancelDownload();
+    /**
+     * 直接更新，不使用版本更新检查器
+     *
+     * @param updateEntity 版本更新信息
+     */
+    public void update(UpdateEntity updateEntity) {
+        mUpdateEntity = refreshParams(updateEntity);
+        try {
+            UpdateUtils.processUpdateEntity(mUpdateEntity, "这里调用的是直接更新方法，因此没有json!", this);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+
 
     //============================构建者===============================//
 
@@ -600,7 +650,19 @@ public class UpdateManager implements IUpdateProxy {
          * @param themeColor
          * @return
          */
+        @Deprecated
         public Builder themeColor(@ColorInt int themeColor) {
+            promptEntity.setThemeColor(themeColor);
+            return this;
+        }
+
+        /**
+         * 设置主题颜色
+         *
+         * @param themeColor
+         * @return
+         */
+        public Builder promptThemeColor(@ColorInt int themeColor) {
             promptEntity.setThemeColor(themeColor);
             return this;
         }
@@ -611,7 +673,19 @@ public class UpdateManager implements IUpdateProxy {
          * @param topResId
          * @return
          */
+        @Deprecated
         public Builder topResId(@DrawableRes int topResId) {
+            promptEntity.setTopResId(topResId);
+            return this;
+        }
+
+        /**
+         * 设置顶部背景图片
+         *
+         * @param topResId
+         * @return
+         */
+        public Builder promptTopResId(@DrawableRes int topResId) {
             promptEntity.setTopResId(topResId);
             return this;
         }
@@ -624,6 +698,28 @@ public class UpdateManager implements IUpdateProxy {
          */
         public Builder supportBackgroundUpdate(boolean supportBackgroundUpdate) {
             promptEntity.setSupportBackgroundUpdate(supportBackgroundUpdate);
+            return this;
+        }
+
+        /**
+         * 设置版本更新提示器宽度占屏幕的比例，默认是-1，不做约束
+         *
+         * @param widthRatio
+         * @return
+         */
+        public Builder promptWidthRatio(float widthRatio) {
+            promptEntity.setWidthRatio(widthRatio);
+            return this;
+        }
+
+        /**
+         * 设置版本更新提示器高度占屏幕的比例，默认是-1，不做约束
+         *
+         * @param heightRatio
+         * @return
+         */
+        public Builder promptHeightRatio(float heightRatio) {
+            promptEntity.setHeightRatio(heightRatio);
             return this;
         }
 

@@ -21,6 +21,7 @@ import android.text.TextUtils;
 
 import com.xuexiang.xupdate._XUpdate;
 import com.xuexiang.xupdate.entity.UpdateEntity;
+import com.xuexiang.xupdate.listener.IUpdateParseCallback;
 import com.xuexiang.xupdate.proxy.IUpdateChecker;
 import com.xuexiang.xupdate.proxy.IUpdateHttpService;
 import com.xuexiang.xupdate.proxy.IUpdateProxy;
@@ -29,11 +30,8 @@ import com.xuexiang.xupdate.utils.UpdateUtils;
 
 import java.util.Map;
 
-import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_APK_CACHE_DIR_EMPTY;
-import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_IGNORED_VERSION;
 import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_JSON_EMPTY;
 import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_NET_REQUEST;
-import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_NO_NEW_VERSION;
 import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_PARSE;
 import static com.xuexiang.xupdate.entity.UpdateError.ERROR.CHECK_UPDATING;
 
@@ -117,30 +115,30 @@ public class DefaultUpdateChecker implements IUpdateChecker {
     }
 
     @Override
-    public void processCheckResult(@NonNull String result, @NonNull IUpdateProxy updateProxy) {
+    public void processCheckResult(final @NonNull String result, final @NonNull IUpdateProxy updateProxy) {
         try {
-            UpdateEntity updateEntity = updateProxy.parseJson(result);
-            if (updateEntity != null) {
-                if (updateEntity.isHasUpdate()) {
-                    //校验是否是已忽略版本
-                    if (UpdateUtils.isIgnoreVersion(updateProxy.getContext(), updateEntity.getVersionName())) {
-                        _XUpdate.onUpdateError(CHECK_IGNORED_VERSION);
-                    //校验apk下载缓存目录是否为空
-                    } else if (TextUtils.isEmpty(updateEntity.getApkCacheDir())) {
-                        _XUpdate.onUpdateError(CHECK_APK_CACHE_DIR_EMPTY);
-                    } else {
-                        updateProxy.findNewVersion(updateEntity, updateProxy);
+            if (updateProxy.isAsyncParser()) {
+                //异步解析
+                updateProxy.parseJson(result, new IUpdateParseCallback() {
+                    @Override
+                    public void onParseResult(UpdateEntity updateEntity) {
+                        try {
+                            UpdateUtils.processUpdateEntity(updateEntity, result, updateProxy);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            _XUpdate.onUpdateError(CHECK_PARSE, e.getMessage());
+                        }
                     }
-                } else {
-                    _XUpdate.onUpdateError(CHECK_NO_NEW_VERSION);
-                }
+                });
             } else {
-                _XUpdate.onUpdateError(CHECK_PARSE, "json:" + result);
+                //同步解析
+                UpdateUtils.processUpdateEntity(updateProxy.parseJson(result), result, updateProxy);
             }
         } catch (Exception e) {
             e.printStackTrace();
             _XUpdate.onUpdateError(CHECK_PARSE, e.getMessage());
         }
     }
+
 
 }

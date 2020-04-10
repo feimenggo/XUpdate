@@ -181,7 +181,12 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             window.setGravity(Gravity.CENTER);
             WindowManager.LayoutParams lp = window.getAttributes();
             DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
-            lp.height = (int) (displayMetrics.heightPixels * 0.8f);
+            if (mPromptEntity.getWidthRatio() > 0 && mPromptEntity.getWidthRatio() < 1) {
+                lp.width = (int) (displayMetrics.widthPixels * mPromptEntity.getWidthRatio());
+            }
+            if (mPromptEntity.getHeightRatio() > 0 && mPromptEntity.getHeightRatio() < 1) {
+                lp.height = (int) (displayMetrics.heightPixels * mPromptEntity.getHeightRatio());
+            }
             window.setAttributes(lp);
         }
     }
